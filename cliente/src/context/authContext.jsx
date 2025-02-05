@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { registerRequest, loginRequest } from "../api/auth";
+import { registerRequest, loginRequest, verifyTokenRequest } from "../api/auth";
 import Cookies from "js-cookie";
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errors, setErrors] = useState([]);
+  const [loading, setLoading] = useState(true);
   const signup = async (user) => {
     try {
       const res = await registerRequest(user);
@@ -54,14 +55,37 @@ export const AuthProvider = ({ children }) => {
   }, [errors]);
 
   useEffect(() => {
-    const cookies = Cookies.get();
-    if (cookies.token) {
-      setIsAuthenticated(true);
+    async function checkLogin() {
+      const cookies = Cookies.get();
+      if (!cookies.token) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return setUser(null);
+      }
+      try {
+        const res = await verifyTokenRequest(cookies.token);
+        if (!res.data) {
+          setIsAuthenticated(false);
+          setLoading(false);
+          setUser(null);
+          return;
+        }
+        setIsAuthenticated(true);
+        setUser(res.data);
+        setLoading(false);
+      } catch (error) {
+        console.log(error);
+        setIsAuthenticated(false);
+        setUser(null);
+        setLoading(false);
+      }
     }
+
+    checkLogin();
   }, []);
   return (
     <AuthContext.Provider
-      value={{ signup, signin, user, isAuthenticated, errors }}
+      value={{ signup, signin, loading, user, isAuthenticated, errors }}
     >
       {children}
     </AuthContext.Provider>
