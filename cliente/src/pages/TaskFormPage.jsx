@@ -1,13 +1,18 @@
+import { useContext } from "react";
 import { useForm } from "react-hook-form";
-import { useTasks } from "../context/TasksContext";
+import TaskContext from "../context/TasksContext";
+// import { createTaskRequest } from "../api/tasks";
+
 const TaskFormPage = () => {
   const { register, handleSubmit } = useForm();
-  const { tasks } = useTasks();
-  console.log(tasks);
+  const { useTasks } = useContext(TaskContext);
+  const { createTask } = useTasks();
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
+    createTask(data);
   });
+
+  useTasks();
   return (
     <div className="bg-zinc-800 max-w-md w-full p-10 rounded-md">
       <form onSubmit={onSubmit}>
